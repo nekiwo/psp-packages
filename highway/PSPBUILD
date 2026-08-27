@@ -1,0 +1,39 @@
+pkgname=highway
+pkgver=1.4.0
+pkgrel=1
+pkgdesc=""
+arch=(any)
+url=""
+license=('MIT')
+groups=('psp-libraries')
+depends=()
+makedepends=()
+optdepends=()
+source=("https://github.com/google/highway/archive/refs/tags/${pkgver}.tar.gz")
+sha256sums=('e72241ac9524bb653ae52ced768b508045d4438726a303f10181a38f764a453c')
+
+prepare() {
+    cd "highway-${pkgver}"
+    patch -p1 < ../../highway-mips.patch
+}
+
+build() {
+    cd "highway-${pkgver}"
+    rm -rf build
+    mkdir build
+    cd build
+    cmake -Wno-dev \
+        -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake \
+        -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DBUILD_TESTING=OFF \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        "${XTRA_OPTS[@]}" .. || { exit 1; }
+    make --quiet $MAKEFLAGS || { exit 1; }
+}
+
+package() {
+    cd "highway-${pkgver}/build"
+    make --quiet $MAKEFLAGS install
+}
