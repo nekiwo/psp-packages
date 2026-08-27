@@ -1,0 +1,44 @@
+pkgname=lcms
+pkgver=2.19.1
+pkgrel=1
+pkgdesc=""
+arch=(any)
+url=""
+license=('MIT')
+groups=('psp-libraries')
+depends=()
+makedepends=()
+optdepends=()
+source=("https://github.com/mm2/Little-CMS/archive/refs/tags/lcms${pkgver}.tar.gz")
+sha256sums=('267705e278e2f7c2fb886c259dadcbaeb2be52748bcbc71c79f08aacacb7a709')
+
+prepare() {
+    cd "Little-CMS-lcms${pkgver}"
+}
+
+build() {
+    cd "Little-CMS-lcms${pkgver}"
+    rm -rf build
+	mkdir build
+	cd build
+	psp-cmake -Wno-dev \
+        -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake \
+        -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+        -DLCMS2_BUILD_SHARED=OFF \
+        -DLCMS2_BUILD_STATIC=ON \
+        -DLCMS2_BUILD_TOOLS=OFF \
+        -DLCMS2_BUILD_TESTS=OFF \
+        -DLCMS2_WITH_THREADS=OFF \
+        -DLCMS2_WITH_FASTFLOAT=OFF \
+        -DLCMS2_WITH_THREADED_PLUGIN=OFF \
+        "${XTRA_OPTS[@]}" .. || { exit 1; }
+    make --quiet $MAKEFLAGS || { exit 1; }
+}
+
+package() {
+    cd "Little-CMS-lcms${pkgver}/build"
+    make --quiet $MAKEFLAGS install
+}
