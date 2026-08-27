@@ -1,0 +1,39 @@
+pkgname=brotli
+pkgver=1.2.0
+pkgrel=1
+pkgdesc=""
+arch=(any)
+url=""
+license=('MIT')
+groups=('psp-libraries')
+depends=()
+makedepends=()
+optdepends=()
+source=("https://github.com/google/brotli/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('816c96e8e8f193b40151dad7e8ff37b1221d019dbcb9c35cd3fadbfe6477dfec')
+
+prepare() {
+    cd "brotli-${pkgver}"
+    patch -p1 < ../../brotli-cmake.patch
+}
+
+build() {
+    cd "brotli-${pkgver}"
+    rm -r build
+    mkdir build
+    cd build
+    psp-cmake -Wno-dev \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=OFF \
+        -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake \
+        -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
+        -DBROTLI_BUILD_TOOLS=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+        "${XTRA_OPTS[@]}" .. || { exit 1; }
+    make --quiet $MAKEFLAGS || { exit 1; }
+}
+
+package() {
+    cd "brotli-${pkgver}/build"
+    make --quiet $MAKEFLAGS install
+}
