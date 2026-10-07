@@ -1,0 +1,59 @@
+pkgname=jxl
+pkgver=0.12.0
+pkgrel=1
+pkgdesc=""
+arch=(any)
+url=""
+license=('BSD-3-Clause')
+groups=('psp-libraries')
+depends=('brotli' 'highway' 'lcms')
+makedepends=()
+optdepends=()
+source=("https://github.com/libjxl/libjxl/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('03e9be69a30be4011f559da75328b6d7cea8ad921fabfbd551ce10bf45cdc992')
+
+prepare() {
+    cd "libjxl-${pkgver}"
+    patch -p1 < ../../jxl-mips.patch
+}
+
+build() {
+    cd "libjxl-${pkgver}"
+    rm -r build
+	mkdir build
+	cd build
+	psp-cmake -Wno-dev \
+        -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake \
+        -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DHWY_DISABLED_TARGETS=ON \
+        -DBUILD_TESTING=OFF \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=OFF \
+        -DJPEGXL_ENABLE_FUZZERS=OFF \
+        -DJPEGXL_ENABLE_DEVTOOLS=OFF \
+        -DJPEGXL_ENABLE_TOOLS=OFF \
+        -DJPEGXL_ENABLE_MANPAGES=OFF \
+        -DJPEGXL_ENABLE_BENCHMARK=OFF \
+        -DJPEGXL_ENABLE_EXAMPLES=OFF \
+        -DJPEGXL_BUNDLE_LIBPNG=OFF \
+        -DJPEGXL_ENABLE_JNI=OFF \
+        -DJPEGXL_ENABLE_SJPEG=OFF \
+        -DJPEGXL_ENABLE_OPENEXR=OFF \
+        -DJPEGXL_ENABLE_SKCMS=OFF \
+        -DJPEGXL_ENABLE_VIEWERS=OFF \
+        -DJPEGXL_ENABLE_TCMALLOC=OFF \
+        -DJPEGXL_ENABLE_PLUGINS=OFF \
+        -DJPEGXL_ENABLE_COVERAGE=OFF \
+        -DJPEGXL_ENABLE_TRANSCODE_JPEG=OFF \
+        -DJPEGXL_ENABLE_BOXES=OFF \
+        -DJPEGXL_TEST_TOOLS=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        "${XTRA_OPTS[@]}" .. || { exit 1; }
+    make --quiet $MAKEFLAGS || { exit 1; }
+}
+
+package() {
+    cd "libjxl-${pkgver}/build"
+    make --quiet $MAKEFLAGS install
+}

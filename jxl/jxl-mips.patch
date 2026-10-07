@@ -1,0 +1,124 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7c6a7c4d..bf29f69b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -60,7 +60,7 @@ include(CheckPIESupported OPTIONAL RESULT_VARIABLE CHECK_PIE_SUPPORTED)
+ if(CHECK_PIE_SUPPORTED)
+   check_pie_supported(LANGUAGES CXX)
+   if(CMAKE_CXX_LINK_PIE_SUPPORTED)
+-    set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
++    set(CMAKE_POSITION_INDEPENDENT_CODE FALSE)
+   endif()
+ endif()
+ 
+@@ -135,6 +135,9 @@ endif()
+ get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
+ option(BUILD_SHARED_LIBS "Build shared libraries instead of static ones" ${SHARED_LIBS_SUPPORTED})
+ 
++set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mlong64")
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mlong64")
++
+ set(JPEGXL_ENABLE_FUZZERS ${ENABLE_FUZZERS_DEFAULT} CACHE BOOL
+     "Build JPEGXL fuzzer targets.")
+ set(JPEGXL_ENABLE_DEVTOOLS false CACHE BOOL
+diff --git a/lib/jxl.cmake b/lib/jxl.cmake
+index 8d962e63..04b31d1e 100644
+--- a/lib/jxl.cmake
++++ b/lib/jxl.cmake
+@@ -115,7 +115,7 @@ add_dependencies(jxl_base jxl_export)
+ add_library(jxl_dec-obj OBJECT ${JPEGXL_INTERNAL_DEC_SOURCES})
+ target_compile_options(jxl_dec-obj PRIVATE ${JPEGXL_INTERNAL_FLAGS})
+ target_compile_options(jxl_dec-obj PUBLIC ${JPEGXL_COVERAGE_FLAGS})
+-set_property(TARGET jxl_dec-obj PROPERTY POSITION_INDEPENDENT_CODE ON)
++set_property(TARGET jxl_dec-obj PROPERTY POSITION_INDEPENDENT_CODE OFF)
+ target_include_directories(jxl_dec-obj BEFORE PUBLIC
+   "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>"
+   "${JXL_HWY_INCLUDE_DIRS}"
+@@ -130,7 +130,7 @@ target_link_libraries(jxl_dec-obj PUBLIC jxl_base)
+ add_library(jxl_enc-obj OBJECT ${JPEGXL_INTERNAL_ENC_SOURCES})
+ target_compile_options(jxl_enc-obj PRIVATE ${JPEGXL_INTERNAL_FLAGS})
+ target_compile_options(jxl_enc-obj PUBLIC ${JPEGXL_COVERAGE_FLAGS})
+-set_property(TARGET jxl_enc-obj PROPERTY POSITION_INDEPENDENT_CODE ON)
++set_property(TARGET jxl_enc-obj PROPERTY POSITION_INDEPENDENT_CODE OFF)
+ target_include_directories(jxl_enc-obj BEFORE PUBLIC
+   ${PROJECT_SOURCE_DIR}
+   ${JXL_HWY_INCLUDE_DIRS}
+diff --git a/lib/jxl_cms.cmake b/lib/jxl_cms.cmake
+index 582b842a..18cef934 100644
+--- a/lib/jxl_cms.cmake
++++ b/lib/jxl_cms.cmake
+@@ -13,7 +13,7 @@ add_library(jxl_cms
+ )
+ target_compile_options(jxl_cms PRIVATE "${JPEGXL_INTERNAL_FLAGS}")
+ set_target_properties(jxl_cms PROPERTIES
+-        POSITION_INDEPENDENT_CODE ON
++        POSITION_INDEPENDENT_CODE OFF
+         CXX_VISIBILITY_PRESET hidden
+         VISIBILITY_INLINES_HIDDEN 1)
+ target_link_libraries(jxl_cms PUBLIC jxl_base)
+diff --git a/lib/jxl_extras.cmake b/lib/jxl_extras.cmake
+index 0f8df98a..3bce5bd5 100644
+--- a/lib/jxl_extras.cmake
++++ b/lib/jxl_extras.cmake
+@@ -112,7 +112,7 @@ endif() # JPEGXL_ENABLE_OPENEXR
+ foreach(LIB ${JXL_EXTRAS_OBJECT_LIBRARIES})
+   target_compile_options("${LIB}" PRIVATE "${JPEGXL_INTERNAL_FLAGS}")
+   target_compile_definitions("${LIB}" PRIVATE -DJXL_EXPORT=)
+-  set_property(TARGET "${LIB}" PROPERTY POSITION_INDEPENDENT_CODE ON)
++  set_property(TARGET "${LIB}" PROPERTY POSITION_INDEPENDENT_CODE OFF)
+   target_include_directories("${LIB}" BEFORE PRIVATE
+     ${PROJECT_SOURCE_DIR}
+     ${CMAKE_CURRENT_SOURCE_DIR}/include
+diff --git a/lib/jxl_threads.cmake b/lib/jxl_threads.cmake
+index a7ed011c..0eedffaa 100644
+--- a/lib/jxl_threads.cmake
++++ b/lib/jxl_threads.cmake
+@@ -10,7 +10,7 @@ include(jxl_lists.cmake)
+ add_library(jxl_threads ${JPEGXL_INTERNAL_THREADS_SOURCES})
+ target_compile_options(jxl_threads PRIVATE ${JPEGXL_INTERNAL_FLAGS})
+ target_compile_options(jxl_threads PUBLIC ${JPEGXL_COVERAGE_FLAGS})
+-set_property(TARGET jxl_threads PROPERTY POSITION_INDEPENDENT_CODE ON)
++set_property(TARGET jxl_threads PROPERTY POSITION_INDEPENDENT_CODE OFF)
+ 
+ target_include_directories(jxl_threads
+   PRIVATE
+diff --git a/third_party/CMakeLists.txt b/third_party/CMakeLists.txt
+index 4647b5e2..61163852 100644
+--- a/third_party/CMakeLists.txt
++++ b/third_party/CMakeLists.txt
+@@ -154,8 +154,8 @@ elseif (JPEGXL_BUNDLE_LIBPNG)
+   set(PNG_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/libpng/" PARENT_SCOPE)
+   target_link_libraries(png_static PUBLIC zlibstatic)
+   set(PNG_LIBRARIES png_static PARENT_SCOPE)
+-  set_property(TARGET png_static PROPERTY POSITION_INDEPENDENT_CODE ON)
+-  set_property(TARGET zlibstatic PROPERTY POSITION_INDEPENDENT_CODE ON)
++  set_property(TARGET png_static PROPERTY POSITION_INDEPENDENT_CODE OFF)
++  set_property(TARGET zlibstatic PROPERTY POSITION_INDEPENDENT_CODE OFF)
+   if(JPEGXL_DEP_LICENSE_DIR)
+     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/libpng/LICENSE"
+                    ${PROJECT_BINARY_DIR}/LICENSE.libpng COPYONLY)
+diff --git a/third_party/lcms2.cmake b/third_party/lcms2.cmake
+index dec6be93..e45719bf 100644
+--- a/third_party/lcms2.cmake
++++ b/third_party/lcms2.cmake
+@@ -74,4 +74,4 @@ else()
+   endif()
+ endif()
+ 
+-set_property(TARGET lcms2 PROPERTY POSITION_INDEPENDENT_CODE ON)
++set_property(TARGET lcms2 PROPERTY POSITION_INDEPENDENT_CODE OFF)
+diff --git a/third_party/testing.cmake b/third_party/testing.cmake
+index e2a19413..e3ec0fb4 100644
+--- a/third_party/testing.cmake
++++ b/third_party/testing.cmake
+@@ -35,8 +35,8 @@ if (EXISTS "${SOURCE_DIR}/googletest/CMakeLists.txt" AND
+   set(GTEST_LIBRARY "$<TARGET_FILE:gtest>")
+   set(GTEST_MAIN_LIBRARY "$<TARGET_FILE:gtest_main>")
+ 
+-  set_target_properties(gtest PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+-  set_target_properties(gtest_main PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
++  set_target_properties(gtest PROPERTIES POSITION_INDEPENDENT_CODE FALSE)
++  set_target_properties(gtest_main PROPERTIES POSITION_INDEPENDENT_CODE FALSE)
+ 
+   get_target_property(GOOGLETEST_VERSION gtest VERSION)
+   message(STATUS "Using GTest from submodule: ${GOOGLETEST_VERSION}")
